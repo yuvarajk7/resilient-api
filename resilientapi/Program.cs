@@ -11,6 +11,7 @@ using resilientapi.RouteGroups;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+builder.Services.AddScoped<ICountryMapper, CountryMapper>();
 
 builder.Services.AddScoped<IHelloService, HelloService>();
 
@@ -85,11 +86,13 @@ app.MapGet("/languages", ([FromHeader(Name = "lng")] string[] lng) =>
 /* Fluent Validators */
 
 app.MapPost("/countries", ([FromBody] Country country, 
-    IValidator<Country> validator) => 
+    IValidator<Country> validator, ICountryMapper mapper) => 
 {    
     var validationResult = validator.Validate(country);
     if( validationResult.IsValid) 
     {
+        var countryDto = mapper.Map(country);
+
         return Results.Created();
     }
     return Results.ValidationProblem(validationResult.ToDictionary(),
