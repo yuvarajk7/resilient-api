@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.OpenApi.Models;
 using resilientapi;
+using resilientapi.Models;
+using resilientapi.RouteGroups;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +24,8 @@ if( app.Environment.IsDevelopment())
 
 app.UseSwagger();
 app.UseSwaggerUI( c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Api v1"));
+
+/* Route Contraints */
 
 app.MapGet("/", () => "Hello World!");
 
@@ -44,6 +48,34 @@ app.MapMethods("/routeName", new List<string> { "OPTIONS", "HEAD", "TRACE" }, ()
 
 app.MapGet("/provinces/{provinceId:int:max(12)}", (int provinceId) => $"ProvinceId {provinceId}");
 
+/* Route groups examples */
+
+app.MapGroup("/countries").GroupCountries();
+
+/* Parameter Bindings */
+
+app.MapPost("/Addresses", ([FromBody] Address address) => {
+    return Results.Created();
+});
+
+//FromForm - application/x-www-form-urlencoded
+app.MapPut("/Addresses/{addressId}", ([FromRoute] int addressId, [FromForm] Address address) => {
+    return Results.NoContent();
+}).DisableAntiforgery();
+
+app.MapGet("/Addresses", ([FromHeader] string coordinates, [FromQuery] int? limitCountSearch) => {
+    return Results.Ok();
+});
+
+app.MapGet("/IdList", ([FromQuery] int[] id) =>
+{
+    return Results.Ok();
+});
+
+app.MapGet("/languages", ([FromHeader(Name = "lng")] string[] lng) =>
+{
+    return Results.Ok(lng);
+});
 
 
 app.Run();
