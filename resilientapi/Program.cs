@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations;
+using System.Net;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.OpenApi.Models;
@@ -6,6 +9,8 @@ using resilientapi.Models;
 using resilientapi.RouteGroups;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 builder.Services.AddScoped<IHelloService, HelloService>();
 
@@ -77,5 +82,18 @@ app.MapGet("/languages", ([FromHeader(Name = "lng")] string[] lng) =>
     return Results.Ok(lng);
 });
 
+/* Fluent Validators */
+
+app.MapPost("/countries", ([FromBody] Country country, 
+    IValidator<Country> validator) => 
+{    
+    var validationResult = validator.Validate(country);
+    if( validationResult.IsValid) 
+    {
+        return Results.Created();
+    }
+    return Results.ValidationProblem(validationResult.ToDictionary(),
+        statusCode: (int)HttpStatusCode.BadRequest);
+});
 
 app.Run();
